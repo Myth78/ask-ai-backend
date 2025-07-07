@@ -4,11 +4,18 @@ const cors = require("cors");
 const fetch = require("node-fetch");
 require("dotenv").config();
 
-const app = express(); // ✅ must come BEFORE any use of `app`
+const app = express();
 
-app.use(cors());
+// ✅ CORS configuration to allow Vercel frontend
+const corsOptions = {
+  origin: "https://ask-ai-green.vercel.app", // ✅ Your frontend domain
+  methods: ["POST"],
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
+// ✅ POST endpoint for the AI question
 app.post("/ask", async (req, res) => {
   const question = req.body.question;
 
@@ -26,20 +33,24 @@ app.post("/ask", async (req, res) => {
     });
 
     const data = await openaiRes.json();
-    console.log("OpenAI raw response:", JSON.stringify(data, null, 2));
+    console.log("🔍 OpenAI response:", JSON.stringify(data, null, 2));
 
-    if (!data.choices || !data.choices[0]) {
-      return res.status(500).json({ error: "OpenAI response invalid", data });
+    const answer = data.choices?.[0]?.message?.content?.trim();
+
+    if (!answer) {
+      return res.status(500).json({ error: "OpenAI did not return an answer", raw: data });
     }
 
-    const answer = data.choices[0].message.content.trim();
     res.json({ answer });
 
   } catch (error) {
-    console.error("OpenAI fetch failed:", error);
-    res.status(500).json({ error: "Server error. Check logs." });
+    console.error("❌ OpenAI fetch failed:", error);
+    res.status(500).json({ error: "OpenAI request failed" });
   }
 });
 
+// ✅ Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
