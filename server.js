@@ -9,7 +9,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 const app = express();
 
 const corsOptions = {
-  origin: "https://ask-ai-green.vercel.app",
+  origin: "https://ghostwhite-starling-406107.hostingersite.com",
   methods: ["POST"],
   credentials: true
 };
