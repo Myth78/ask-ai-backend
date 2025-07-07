@@ -1,25 +1,31 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const fetch = require("node-fetch");
-require("dotenv").config();
+const dotenv = require("dotenv");
+dotenv.config();
+
+// ✅ Dynamic fetch import (for node-fetch v3 in CommonJS)
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 
-// ✅ CORS configuration to allow Vercel frontend
+// ✅ Allow requests from your Vercel frontend
 const corsOptions = {
-  origin: "https://ask-ai-green.vercel.app", // ✅ Your frontend domain
+  origin: "https://ask-ai-green.vercel.app", // Replace with your actual frontend URL
   methods: ["POST"],
   credentials: true
 };
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-// ✅ POST endpoint for the AI question
 app.post("/ask", async (req, res) => {
   const question = req.body.question;
 
   try {
+    if (!question) {
+      return res.status(400).json({ error: "No question provided" });
+    }
+
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -44,13 +50,10 @@ app.post("/ask", async (req, res) => {
     res.json({ answer });
 
   } catch (error) {
-    console.error("❌ OpenAI fetch failed:", error);
-    res.status(500).json({ error: "OpenAI request failed" });
+    console.error("❌ Error during OpenAI call:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
-// ✅ Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
