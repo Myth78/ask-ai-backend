@@ -4,14 +4,12 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 dotenv.config();
 
-// ✅ Dynamic fetch import (for node-fetch v3 in CommonJS)
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 
-// ✅ Allow requests from your Vercel frontend
 const corsOptions = {
-  origin: "https://ask-ai-green.vercel.app", // Replace with your actual frontend URL
+  origin: "https://ask-ai-green.vercel.app",
   methods: ["POST"],
   credentials: true
 };
@@ -33,7 +31,7 @@ app.post("/ask", async (req, res) => {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4",
+        model: "gpt-3.5-turbo",
         messages: [{ role: "user", content: question }]
       })
     });
