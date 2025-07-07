@@ -1,15 +1,17 @@
-const cors = require("cors");
-app.use(cors());
 const express = require("express");
 const bodyParser = require("body-parser");
+const cors = require("cors");
 const fetch = require("node-fetch");
 require("dotenv").config();
 
 const app = express();
+
+app.use(cors());
 app.use(bodyParser.json());
 
 app.post("/ask", async (req, res) => {
   const question = req.body.question;
+
   try {
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -27,7 +29,7 @@ app.post("/ask", async (req, res) => {
     const answer = data.choices[0].message.content.trim();
     res.json({ answer });
   } catch (error) {
-    res.status(500).json({ error: "OpenAI API call failed." });
+    res.status(500).json({ error: "Error contacting OpenAI." });
   }
 });
 
