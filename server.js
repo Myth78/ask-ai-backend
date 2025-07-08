@@ -1,57 +1,46 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
-const dotenv = require("dotenv");
-dotenv.config();
-
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+const fetch = require("node-fetch");
+require("dotenv").config();
 
 const app = express();
+app.use(cors());
+app.use(express.json());
 
-const corsOptions = {
-  origin: "https://ghostwhite-starling-406107.hostingersite.com",
-  methods: ["POST"],
-  credentials: true
-};
-app.use(cors(corsOptions));
-app.use(bodyParser.json());
+const COHERE_API_KEY = process.env.COHERE_API_KEY;
 
 app.post("/ask", async (req, res) => {
-  const question = req.body.question;
+  const { question } = req.body;
 
   try {
-    if (!question) {
-      return res.status(400).json({ error: "No question provided" });
-    }
-
-    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        "Authorization": `Bearer ${COHERE_API_KEY}`,
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [{ role: "user", content: question }]
+        model: "command",
+        prompt: `Give me 5 creative business names and a logo idea for each based on: "${question}"`,
+        max_tokens: 200,
+        temperature: 0.9
       })
     });
 
-    const data = await openaiRes.json();
-    console.log("🔍 OpenAI response:", JSON.stringify(data, null, 2));
+    const data = await response.json();
 
-    const answer = data.choices?.[0]?.message?.content?.trim();
-
-    if (!answer) {
-      return res.status(500).json({ error: "OpenAI did not return an answer", raw: data });
+    if (data.generations && data.generations[0]) {
+      res.json({ result: data.generations[0].text.trim() });
+    } else {
+      res.status(500).json({ error: "No response from Cohere" });
     }
-
-    res.json({ answer });
-
-  } catch (error) {
-    console.error("❌ Error during OpenAI call:", error);
-    res.status(500).json({ error: "Internal server error" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to contact Cohere API" });
   }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
