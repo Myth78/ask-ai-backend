@@ -11,32 +11,35 @@ const COHERE_API_KEY = process.env.COHERE_API_KEY;
 
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
+  console.log("Question received:", question);
 
   try {
     const response = await fetch("https://api.cohere.ai/v1/generate", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${COHERE_API_KEY}`,
-        "Content-Type": "application/json"
+        Authorization: `Bearer ${COHERE_API_KEY}`,
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({
         model: "command",
         prompt: `Give me 5 creative business names and a logo idea for each based on: "${question}"`,
         max_tokens: 200,
         temperature: 0.9
-      })
+      }),
     });
 
     const data = await response.json();
+    console.log("Cohere response:", data);
 
-    if (data.generations && data.generations[0]) {
+    if (data.generations && data.generations.length > 0) {
       res.json({ result: data.generations[0].text.trim() });
     } else {
-      res.status(500).json({ error: "No response from Cohere" });
+      res.status(500).json({ error: "No generations received", data });
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Failed to contact Cohere API" });
+
+  } catch (error) {
+    console.error("Error contacting Cohere:", error);
+    res.status(500).json({ error: "Failed to contact Cohere" });
   }
 });
 
