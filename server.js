@@ -26,7 +26,7 @@ app.post("/ask", async (req, res) => {
       },
       body: JSON.stringify({
         model: "command",
-        prompt: `Give me 5 creative business names and a logo idea for each based on: "${question}"`,
+        prompt: `Give me 5 business names based on: "${question}"`,
         max_tokens: 200,
         temperature: 0.9
       }),
